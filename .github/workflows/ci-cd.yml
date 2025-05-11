@@ -28,7 +28,7 @@ jobs:
           ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
             # Клонируем репозиторий (если его нет) и переходим в папку проекта
             ls -la
-            cd ./ || git clone https://github.com/youruser/yourrepo.git /path/to/your/project
+            git clone https://github.com/KaworuMB/final-repo.git
             cd ./final-repo/final_project_inf373
 
             # Запускаем контейнеры для тестирования
