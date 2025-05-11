@@ -1,76 +1,50 @@
-name: Test and Deploy Workflow
+# .github/workflows/test-deploy.yml
+name: Test and Deploy
 
 on:
   push:
-    branches:
-      - main  # или branch, на который ты пушишь изменения
+    branches: [ main ]
 
 jobs:
   test:
+    name: Run tests on test VM
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Клонируем репозиторий на тестовый сервер
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      # 2. Настройка SSH для подключения к тестовому серверу
-      - name: Set up SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
-
-      # 3. Клонировать репозиторий на сервер и запустить контейнеры
-      - name: Deploy and Run Tests on Server
-        run: |
-          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
-            # Клонируем репозиторий (если его нет) и переходим в папку проекта
-            ls -la
+      - name: SSH to Test Server and Run Tests
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.TEST_SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.TEST_SSH_PRIVATE_KEY }}
+          script: |
+            rm -rf final-repo
             git clone https://github.com/KaworuMB/final-repo.git
-            cd ./final-repo/final_project_inf373
-
-            # Запускаем контейнеры для тестирования
-            docker-compose -f docker-compose.test.yml up -d --build
-
-            # Подождём, пока контейнеры полностью запустятся
-            sleep 10
-
-            # Запускаем тесты
-            docker-compose -f docker-compose.test.yml exec -T django python manage.py test
-
-            # Проверка результата тестов
-            if [ $? -eq 0 ]; then
-              echo "Tests passed"
-            else
-              echo "Tests failed"
-              exit 1
-            fi
-
-            # Останавливаем контейнеры
-            docker-compose -f docker-compose.test.yml down
-          EOF
+            cd final-repo/final-project-inf373
+            docker-compose down -v --remove-orphans || true
+            docker-compose up -d --build
+            sleep 20  # wait for services to boot
+            docker-compose exec web python manage.py test || exit 1
+            docker-compose down -v --remove-orphans
 
   deploy:
+    name: Deploy to production VM
+    needs: test
     runs-on: ubuntu-latest
-    needs: test  # Этот джоб выполняется только если джоб "test" прошёл успешно
 
     steps:
-      - name: Set up SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
-
-      # 2. Разворачиваем приложение на сервере
-      - name: Deploy to production server
-        run: |
-          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
-            git pull origin main
-            cd /final-repo/final_project_inf373  # Путь к проект
-
-            # Запускаем контейнеры для деплоя
-            docker-compose -f docker-compose.prod.yml up -d --build
-          EOF
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            rm -rf final-repo
+            git clone https://github.com/KaworuMB/final-repo.git
+            cd final-repo/final-project-inf373
+            docker-compose down -v --remove-orphans || true
+            docker-compose up -d --build
