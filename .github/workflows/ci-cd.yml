@@ -17,9 +17,9 @@ jobs:
       - name: SSH to Test Server and Run Tests
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.TEST_SSH_HOST }}
+          host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.TEST_SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             rm -rf final-repo
             git clone https://github.com/KaworuMB/final-repo.git
