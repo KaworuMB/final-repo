@@ -27,8 +27,8 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
             # Клонируем репозиторий (если его нет) и переходим в папку проекта
-            cd /path/to/your/project || git clone https://github.com/youruser/yourrepo.git /path/to/your/project
-            cd /path/to/your/project
+            cd ./ || git clone https://github.com/youruser/yourrepo.git /path/to/your/project
+            cd ./final-repo/final_project_inf373
 
             # Запускаем контейнеры для тестирования
             docker-compose -f docker-compose.test.yml up -d --build
@@ -67,10 +67,8 @@ jobs:
       - name: Deploy to production server
         run: |
           ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
-            cd /path/to/your/project  # Путь к проекту
-
-            # Pull the latest code
             git pull origin main
+            cd /final-repo/final_project_inf373  # Путь к проект
 
             # Запускаем контейнеры для деплоя
             docker-compose -f docker-compose.prod.yml up -d --build
