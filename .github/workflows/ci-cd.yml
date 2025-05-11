@@ -1,0 +1,77 @@
+name: Test and Deploy Workflow
+
+on:
+  push:
+    branches:
+      - main  # или branch, на который ты пушишь изменения
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Клонируем репозиторий на тестовый сервер
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Настройка SSH для подключения к тестовому серверу
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      # 3. Клонировать репозиторий на сервер и запустить контейнеры
+      - name: Deploy and Run Tests on Server
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
+            # Клонируем репозиторий (если его нет) и переходим в папку проекта
+            cd /path/to/your/project || git clone https://github.com/youruser/yourrepo.git /path/to/your/project
+            cd /path/to/your/project
+
+            # Запускаем контейнеры для тестирования
+            docker-compose -f docker-compose.test.yml up -d --build
+
+            # Подождём, пока контейнеры полностью запустятся
+            sleep 500
+
+            # Запускаем тесты
+            docker-compose -f docker-compose.test.yml exec -T django python manage.py test
+
+            # Проверка результата тестов
+            if [ $? -eq 0 ]; then
+              echo "Tests passed"
+            else
+              echo "Tests failed"
+              exit 1
+            fi
+
+            # Останавливаем контейнеры
+            docker-compose -f docker-compose.test.yml down
+          EOF
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test  # Этот джоб выполняется только если джоб "test" прошёл успешно
+
+    steps:
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      # 2. Разворачиваем приложение на сервере
+      - name: Deploy to production server
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
+            cd /path/to/your/project  # Путь к проекту
+
+            # Pull the latest code
+            git pull origin main
+
+            # Запускаем контейнеры для деплоя
+            docker-compose -f docker-compose.prod.yml up -d --build
+          EOF
