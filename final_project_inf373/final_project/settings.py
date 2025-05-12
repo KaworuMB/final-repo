@@ -33,9 +33,10 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",     # если фронт в деве
-    "http://localhost",          # если без порта
-    "https://kaworu.kz",         # если фронт через Caddy
+    "http://localhost:3000",
+    "http://localhost",
+    "https://kaworu.kz",
+    "https://api.kaworu.kz"
 ]
 
 
