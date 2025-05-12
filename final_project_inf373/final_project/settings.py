@@ -38,6 +38,17 @@ CORS_ALLOWED_ORIGINS = [
     "https://kaworu.kz",
     "https://api.kaworu.kz"
 ]
+CORS_ALLOWED_ORIGINS = [
+    "https://kaworu.kz",
+    "https://api.kaworu.kz",
+    "http://localhost:3000",
+    "http://localhost",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://kaworu.kz",
+    "https://api.kaworu.kz",
+]
 
 
 # Application definition
