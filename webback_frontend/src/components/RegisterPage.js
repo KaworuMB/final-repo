@@ -12,7 +12,7 @@ const RegisterPage = () => {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    const response = await fetch('http://localhost:8000/api/auth/register/', {
+    const response = await fetch('https://kaworu.kz/api/auth/register/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
