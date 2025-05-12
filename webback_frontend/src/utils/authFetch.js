@@ -1,4 +1,4 @@
-const BASE_URL = 'http://127.0.0.1:8000';
+const BASE_URL ='https://kaworu.kz';
 
 export const authFetch = async (url, options = {}) => {
   const access = localStorage.getItem('access');

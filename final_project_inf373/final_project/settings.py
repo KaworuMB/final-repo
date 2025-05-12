@@ -30,7 +30,8 @@ AUTH_USER_MODEL = 'main.User'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['kaworu.kz', 'localhost', '127.0.0.1']
+
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",

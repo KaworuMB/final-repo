@@ -1,20 +1,15 @@
-kaworu.kz {
-    acme_ca https://acme-staging-v02.api.letsencrypt.org/directory  # Используем staging CA для тестирования
-    email moldabekbekzat43@gmail.com  # Указываем email для получения уведомлений
-    debug  # Включаем режим отладки (по желанию)
-
-    reverse_proxy /api/* django-app:8000  # Прокси на Django по HTTP
-
-    reverse_proxy frontend:3000  # Прокси на фронтенд
-
-    handle_path /ws* {
-        reverse_proxy frontend:3000 
-    }
-
-    header {
-        Strict-Transport-Security "max-age=31536000;"
-        Access-Control-Allow-Origin *
-        Access-Control-Allow-Methods "GET, POST, OPTIONS"
-        Access-Control-Allow-Headers "Content-Type, Authorization"
-    }
+{
+    acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
 }
+
+kaworu.kz {
+    # HTTPS включается автоматически
+    # Проксируем фронт (React)
+    reverse_proxy frontend:3000
+
+    # Проксируем API-запросы на Django backend
+    reverse_proxy /api/* django_app:8000
+
+    # (по желанию) добавь заголовки или логирование
+}
+
